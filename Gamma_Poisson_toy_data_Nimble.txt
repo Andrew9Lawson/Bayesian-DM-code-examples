@@ -1,0 +1,49 @@
+#### Gamma Poisson toy data example #####
+library(nimble)
+GPCode<-nimbleCode({
+for(i in 1:N){
+log(theta[i])<-a0+v[i]
+lambda[i]<-theta[i]*texp[i]
+y[i]~dpois(lambda[i])
+v[i]~dnorm(0,tauv)
+}
+a0~dnorm(0,tau0)
+tauv~dgamma(2,0.5)
+tau0~dgamma(2,0.5)})
+
+GPConsts<-list(N=10,texp=c(4.3,1.7,6.9,12,3.0,30.0,2,1.05,1.05,3.1,10.5))
+GPData<-list(y=c(5,1,5,14,3,19,1,1,4,22))
+GPInits<-list(alpha=1,beta=1,theta=rep(1.0,GPConsts$N))
+
+GP<-nimbleModel(code=GPCode,name="GP",constants=GPConsts,
+data=GPData,inits=GPInits)
+#####################################################################
+
+######################## Compile  ######################################
+CGP<-compileNimble(GP)
+CGP$theta
+
+
+mcmc.out<-nimbleMCMC(code=GPCode,constants=GPConsts,
+data=GPData,inits=GPInits,nchains=2,niter=10000,summary=TRUE,WAIC=TRUE)
+
+mcmc.out$summary
+
+#####################################################################
+
+GPConf<-configureMCMC(GP,print=TRUE)
+GPConf$addMonitors(c("alpha","beta","theta"))
+GPMCMC<-buildMCMC(GPConf)
+CGPMCMC<-compileNimble(GPMCMC,project=GP)
+niter<-10000
+set.seed(1)
+samples<-runMCMC(CGPMCMC,niter=niter)
+plot(samples[,"alpha"],type="l",xlab="iteration",ylab=expression(alpha))
+plot(samples[,"beta"],type="l",xlab="iteration",ylab=expression(beta))
+#par(mfrow=c(5,2))
+for(k in 1:10){
+plot(samples[,2+k],type="l",xlab="iteration",ylab=expression(theta))
+x11()}
+
+samplesDF<-data.frame(samples)
+plot(density(samplesDF$theta.1.))

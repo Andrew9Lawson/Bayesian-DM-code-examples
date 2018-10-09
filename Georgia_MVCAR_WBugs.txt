@@ -1,0 +1,62 @@
+MODEL
+{
+for(i in 1:N){
+Y[i,1]<-asthma[i]
+Y[i,2]<-COPD[i]
+Y[i,3]<-angina[i]
+E[i,1]<-Easthma[i]
+E[i,2]<-ECOPD[i]
+E[i,3]<-Eangina[i]
+}
+
+		for (i in 1:N) {
+			for (k in 1:3) {
+				Y[i, k] ~ dpois(mu[i, k])
+				log(mu[i, k]) <- log(E[i, k]) + alpha[k] + S[k, i]+U[i,k]			# Note dimension of S is reversed:
+							# rows=k, cols=i because mv.car
+							# assumes rows represent variables
+							# (diseases) and columns represent
+							# observations (areas).			
+			}
+			RR1[i] <- exp(alpha[1] + S[1,i]+U[i,1])                # area specific relative risk for disease 1 (asthma)
+			RR2[i] <- exp(alpha[2] + S[2,i]+U[i,2])                # area specific relative risk for disease 2 (COPD)
+			RR3[i]<- exp(alpha[3]+S[3,i]+U[i,3])	    #angina
+		}
+	
+		# MV CAR prior for the spatial random effects
+		S[1:3, 1:N] ~ mv.car(adj[], weights[], num[], omega[ , ])								# MVCAR prior 
+		for (i in 1:sumNumNeigh) {	weights[i] <- 1 	}
+		for (i in 1:N) {
+			U[i, 1:3] ~ dmnorm(zero[], tau[ , ])				# Unstructured multivariate normal
+		}
+		tau[1:3, 1:3] ~ dwish(Q[ , ], 3)			
+		# Other priors	
+		for (k in 1:3) {
+			alpha[k] ~ dflat()
+		}
+		mu1<-mean(RR1[])
+	mu2<-mean(RR2[])
+	mu3<-mean(RR3[])
+	sd1<-sd(RR1[])
+	sd2<-sd(RR2[])
+	sd3<-sd(RR3[])
+	mu12<-inprod(RR1[],RR2[])/N
+	mu13<-inprod(RR1[],RR3[])/N
+	mu23<-inprod(RR2[],RR3[])/N
+	CRR12<-(mu12-mu1*mu2)/(sd1*sd2)
+	CRR13<-(mu13-mu1*mu3)/(sd1*sd3)
+	CRR23<-(mu23-mu2*mu3)/(sd2*sd3)
+	
+		omega[1:3, 1:3] ~ dwish(R[ , ], 3)							# Precision matrix of MVCAR
+		sigma2[1:3, 1:3] <- inverse(omega[ , ])							# Covariance matrix of MVCAR	
+		sigma[1] <- sqrt(sigma2[1, 1])						# conditional SD of S[1,] (asthma)
+		sigma[2] <- sqrt(sigma2[2, 2])						# conditional SD of S[2,] (COPD)
+		sigma[3]<-sqrt(sigma2[3,3])
+		corr12 <- sigma2[1, 2] / (sigma[1] * sigma[2])     # between asthma and COPD
+		corr13<-sigma2[1,3]/(sigma[1]*sigma[3])    # between asthma and angina  
+		corr23<-sigma2[2,3]/(sigma[2]*sigma[3])    # between COPD and angina
+	}
+
+}
+
+}

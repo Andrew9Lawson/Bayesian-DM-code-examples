@@ -1,0 +1,64 @@
+#######################################
+####Bayesian Disease Mapping examples
+#######################################
+
+
+Preliminaries
+
+library(INLA)
+
+### need graphics tools
+
+library(maptools)
+library(spdep)
+
+
+setwd("C:/..............................................................................")
+source("fillmap.R")
+
+
+
+################################################
+## FMD example
+################################################
+
+FMDframe<-list(n=138,
+count=c(1,0,1,0,2,3,1,0,1,0,3,2,0,3,1,6,1,10,2,1,8,4,4,1,1,
+3,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,
+0,0,0,1,1,1,0,0,0,0,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0),pop=c( 26,19,28,42,55,30,45,20,35,73,35,5,24,30,17,13,12,61,13,19,30,10,7,29,31,23,54,42,21,34,13,6,5,15,33,15,4,4,15,15,12,24,9,17,4,6,28,14,50,17,4,8,28,9,12,20,33,5,3,12,11,11,24,6,9,10,4,8,19,16,14,3,8,8,13,28,21,18,12,19,19,12,24,12,15,6,10,35,7,8,11,7,8,9,13,59,5,2,26,2,3,6,3,7,12,5,25,6,15,7,7,22,68,5,13,30,35,17,9,120,8,17,22,33,20,7,18,84,38,6,20,25,13,31,14,60,18,7 ))
+
+FMDmap<-readSplus("FMD_splusMAP.txt")
+plot(FMDmap)
+
+attach(FMDframe)
+rate<-count/pop
+
+#######################################
+### map of crude rates
+#######################################
+
+fillmap(FMDmap,"crude rate map",rate,n.col=6)
+
+ind<-seq(1:138)
+formula1<-count~1+f(ind,model="iid",param=c(2,1))
+res1<-inla(formula1,family="binomial",data=FMDframe,Ntrials=pop,
+control.compute=list(dic=TRUE))
+
+summary(res1)
+
+UH<-res1$summary.random$ind[,2]
+fillmap(FMDmap,"posterior mean UH component",UH,n.col=4)
+
+fit<-res1$summary.fitted.values$mean
+resid<-count-fit
+
+fillmap(FMDmap,"estimated crude residuals",resid,n.col=4)
+
+linPred<-res1$summary.linear.predictor$mean
+prob<-exp(linPred)/(1+exp(linPred))
+
+fillmap(FMDmap,"posterior mean infection probability",prob,n.col=4)
+
+###################################################

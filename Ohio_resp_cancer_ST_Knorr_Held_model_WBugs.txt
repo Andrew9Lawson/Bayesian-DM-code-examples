@@ -1,0 +1,30 @@
+model
+{
+for (i in 1:m)
+{
+	for (k in 1:T)
+	{y[i,k]~dpois(mu[i,k])
+       log(mu[i,k])<-log(e[i,k])+log(theta[i,k])
+log(theta[i,k])<-a0+g[k]+u[i]+v[i]+psi[i,k]
+psi[i,k]~dnorm(0,taupsi)
+	}	
+v[i]~dnorm(0,tauv)
+}
+g[1]~dnorm(0,taug)
+for (k in 2:T){
+      g[k]~dnorm(g[k-1],taug)
+		}
+		u[1:m]~car.normal(adj[],weights[],num[],tauu)
+		for(k in 1:sumNumNeigh) {
+		weights[k] <- 1}
+a0~dflat()
+tauu<-1/pow(sdu,2)
+sdu~dunif(0,10)
+taug<-1/pow(sdg,2)
+sdg~dunif(0,10)
+taupsi<-1/pow(sdpsi,2)
+sdpsi~dunif(0,2)
+tauv<-1/pow(sdv,2)
+sdv~dunif(0,10)
+for(k in 1:T){t1[k]<-t[k]}
+}

@@ -1,0 +1,115 @@
+
+M<-1794
+m<-138
+T<-13
+case<-matrix(0,nrow=138,ncol=13)
+pop<-matrix(0,nrow=138,ncol=13)
+for( i in 1: m){
+
+case[i,1]<-CASE1[i]
+case[i,2]<-CASE2[i]
+case[i,3]<-CASE3[i]
+case[i,4]<-CASE4[i]
+case[i,5]<-CASE5[i]
+case[i,6]<-CASE6[i]
+case[i,7]<-CASE7[i]
+case[i,8]<-CASE8[i]
+case[i,9]<-CASE9[i]
+case[i,10]<-CASE10[i]
+case[i,11]<-CASE11[i]
+case[i,12]<-CASE12[i]
+case[i,13]<-CASE13[i]
+pop[i,1]<-POP1[i]
+pop[i,2]<-POP2[i];
+pop[i,3]<-POP3[i]
+pop[i,4]<-POP4[i]
+pop[i,5]<-POP5[i]
+pop[i,6]<-POP6[i]
+pop[i,7]<-POP7[i]
+pop[i,8]<-POP8[i]
+pop[i,9]<-POP9[i]
+pop[i,10]<-POP10[i]
+pop[i,11]<-POP11[i]
+pop[i,12]<-POP12[i]
+pop[i,13]<-POP13[i]}
+
+yL<-rep(0,M)
+pL<-rep(0,M)
+T=13
+for (i in 1:138){
+for (j in 1:13){
+k<-j+T*(i-1)
+yL[k]<-case[i,j]
+pL[k]<-pop[i,j]
+}}
+timeP<-rep(1:13,length=M)
+region<-rep(1:138,each=13)
+region2<-region
+ind2<-rep(1:M)
+data<-data.frame(yL,pL,timeP,region,region2,ind2)
+
+###################################################################
+###################################################################
+###################################################################
+### set working directory  #######################################
+library(INLA)
+library(maptools)
+library(spdep)
+source("fillmap.R")
+FMDmap<-readSplus("FMD_splusMAP.txt")
+adjpoly<-poly2nb(FMDmap)
+nb2INLA("FMDinlaMAP",adjpoly)
+
+
+
+#### pL as offset ###################################################
+
+summary
+#### pL as predictor  ##################################################
+
+formula1b<-yL~1+f(region,model="iid")+f(region2,model="besag",graph="FMDinlaMAP")+pL
+result1b<-inla(formula1b,family="poisson",data=data,control.compute=list(dic=TRUE,cpo=TRUE))
+
+#####  PLUS  time RW1  ####################################################
+
+formula2<-yL~1+f(region,model="iid")+f(region2,model="besag",graph="FMDinlaMAP")+pL+f(timeP,model="rw1")
+result2<-inla(formula2,family="poisson",data=data,control.compute=list(dic=TRUE,cpo=TRUE))
+summary(result2)
+
+##### pL offset PLUS time RW1  ###############################################
+formula3<-yL~1+f(region,model="iid")+f(region2,model="besag",graph="FMDinlaMAP")+f(timeP,model="rw1")
+result3<-inla(formula3,family="poisson",data=data,
+E=pL,control.compute=list(dic=TRUE,cpo=TRUE))
+summary(result3)
+ 
+###### UH +CH+pL predictor + time RW1+ ST int   ##################################
+
+formula4<-yL~1+f(region,model="iid")+f(region2,model="besag",graph="FMDinlaMAP")+pL+f(timeP,model="rw1")+f(ind2,model="iid")
+result4<-inla(formula4,family="poisson",data=data,control.compute=list(dic=TRUE,cpo=TRUE))
+summary(result4)
+####Results ######################################################################
+
+UH<-result4$summary.random$region[,2]
+CH<-result4$summary.random$region2[,2]
+yearR<-result4$summary.random$timeP[,2]
+STint<-result4$summary.random$ind2[,2]
+fillmap(FMDmap,"UH",UH,n.col=4)
+x11()
+fillmap(FMDmap,"CH",CH,n.col=4)
+time<-seq(1:13)
+plot(time,yearR)
+lines(time,yearR)
+STest<-matrix(0,nrow=138,ncol=13)
+for(k in 1:M){
+i=ceiling(k/13)
+j=k-13*(i-1)
+STest[i,j]<-STint[k]}
+ST1<-STest[,1]
+ST2<-STest[,2]
+ST3<-STest[,3]
+ST4<-STest[,4]
+ST5<-STest[,5]
+
+fillmap(FMDmap,"ST interaction period 1",ST1,n.col=6)
+x11()
+fillmap(FMDmap,"ST interaction period 2",ST2,n.col=6)

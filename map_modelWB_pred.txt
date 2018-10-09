@@ -1,0 +1,23 @@
+model
+{
+for (i in 1:m)
+{
+	# Poisson likelihood for observed counts
+	y[i]~dpois(mu[i])
+	ypred[i]~dpois(mu[i])
+	mu[i]<-e[i]*theta[i]
+	probexc[i]<-step(theta[i]-1)
+	# Relative Risk
+	theta[i]~dgamma(a,b)
+	r[i]<-y[i]-mu[i]
+	rpred[i]<-y[i]-ypred[i]
+}
+
+# Prior distributions for "population" parameters
+a~dexp(10)
+b~dexp(10)
+
+# Population mean and population variance
+mean<-a/b
+var<-a/pow(b,2)
+}

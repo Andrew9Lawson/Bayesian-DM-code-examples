@@ -1,0 +1,55 @@
+model{ 
+
+for( i in 1:18){ 
+
+yph[i]~dpois(muph[i]) 
+
+log(muph[i])<-log(eph[i])+log(thph[i]) 
+
+thph[i]<-exp(aph0+uph[i]+vph[i]) 
+
+vph[i]~dnorm(0,0.0001) 
+
+} 
+
+for( j in 1:159){ 
+
+yc[j]~dpois(muc[j]) 
+
+log(muc[j])<-log(ec[j])+log(thc[j]) 
+
+thc[j]<-exp(ac0+uc[j]+vc[j]) 
+
+vc[j]~dnorm(0,0.0001) 
+
+}  
+
+for (k in 1 :nsumph){weiph[k]<-1} 
+
+uph[1:18]~car.normal(adj[],weiph[],num[],tauph) 
+
+#tau.vph<-1/pow(sdvph,2) 
+
+tauph<-1/pow(sdph,2) 
+
+aph0~dflat() 
+
+#sdvph~dunif(0,100) 
+
+sdph~dunif(0,100) 
+
+for (o in 1 :nsumc){weic[o]<-1} 
+
+uc[1:159]~car.normal(adj2[],weic[],num2[],tauc) 
+
+#tau.vc<-1/pow(sdvc,2) 
+
+tauc<-1/pow(sdc,2) 
+
+ac0~dflat() 
+
+#sdvc~dunif(0,100) 
+
+sdc~dunif(0,100) 
+
+}

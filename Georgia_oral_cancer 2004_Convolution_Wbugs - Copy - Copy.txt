@@ -1,0 +1,40 @@
+model
+{
+   for( i in 1 : m ) {
+      y[i] ~ dpois(mu[i])
+
+      mu[i] <- e[i] * rr[i]
+smr[i]<-(y[i]+eps2)/(e[i]+eps2)
+      rr[i] <- exp(al0 +v[i]+u[i])
+v[i]~dnorm(0,tVac)
+PP[i]<-step(rr[i]-1+eps)
+ypred[i] ~ dpois(mu[i])
+PPL[i] <- pow(ypred[i]-y[i],2)
+PPL2[i] <- abs(ypred[i]-y[i])
+eres[i]<-(y[i]-mu[i])/sqrt(mu[i])
+estar[i]<-sum(we[cum[i]+1:cum[i+1]])
+de[i]<-eres[i]-mean(eres[])
+d.estar[i]<-estar[i]-mean(estar[])
+dt[i]<-de[i]*d.estar[i]
+db[i]<-pow(d.estar[i],2)
+   } 
+mape <- mean(PPL2[])
+mspe <- mean(PPL[])
+tVac<-pow(sdVac,-2)
+sdVac~dunif(0,100)
+# car normal 
+u[1:m]~car.normal(adj[],weights[],num[],tau.u)
+
+for(k in 1:sumNumNeigh)
+{
+	weights[k]<-1
+	we[k]<-eres[adj[k]]
+}
+
+
+al0 ~ dflat()
+eps<-1.0E-6
+eps2~dnorm(0,1000)
+tau.u~dgamma(0.005,0.005)
+rho<-sum(dt[])/sum(db[])
+}

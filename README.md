@@ -10,6 +10,7 @@ map_modelWB_pred.txt;
 R2WB_runfile_pred.txt;
 Ohio_resp_cancer_ST_Knorr_Held_model_WBugs.txt;
 Georgia_oral_cancer 2004_Convolution_Wbugs.txt
+M-model 3 Georgia_diseases_v2.odc
 
 CARBayes:
 
@@ -23,6 +24,7 @@ SC_congen90_lognormal_Nimble.txt;
 Gamma_Poisson_toy_data_Nimble.txt;
 STinT_models_Ohio_Nimble.txt;
 Georgia_MultiScale_CONV_Nimble.txt;
+M-model_3diseases_nimble_version_v2.txt
 
 INLA:
 
